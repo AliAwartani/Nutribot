@@ -1,0 +1,49 @@
+{% extends "mealplanmaker/layout.html" %}
+{% block body %}
+<!DOCTYPE html>
+
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Food Ingredient Detector</title>
+</head>
+<body>
+
+<h2>Upload a picture of the ingredient or dish</h2>
+<form action="{% url 'shelf' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="image" required>
+    <button type="submit">Upload and Detect</button>
+</form>
+
+{% if data %}
+    <h3>Detection Results:</h3>
+    <div>
+        <pre>{{ data|safe }}</pre>
+    </div>
+{% endif %}
+
+</body>
+</html>
+
+
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredients Shelf</title>
+</head>
+<body>
+    <h1>Ingredients Shelf</h1>
+    <ul>
+        {% for ingredient in ingredients %}
+            <li>{{ ingredient.name }} - {{ ingredient.quantity }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+
+{% endblock %}
+

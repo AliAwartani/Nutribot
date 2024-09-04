@@ -1,0 +1,84 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NutriBot</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon-16x16.png' %}"/>
+    <!-- custom CSS for position of navbar -->
+    <style>
+        body {
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: white; 
+            z-index: 1;
+        }
+        body::before, body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 20%;
+            background: url("{% static 'nutribotbbg.png' %}") repeat-y center center;
+            background-size: contain;
+            z-index: -1;
+        }
+        body::before {
+            left: 0;
+        }
+        body::after {
+            right: 0;
+        }
+        .navbar-nav {
+            width: 100%;
+            justify-content: center;
+        }
+        .navbar-brand {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background: url('{% static 'woodnavbar.png' %}');">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <img src="{% static 'nutribotlogo.png' %}" alt="NutriBot Logo" style="width: 50px; height: auto;">
+        </a>
+        <div style="text-align: center; margin: 0; padding: 0;">
+            <ul class="navbar-nav mr-auto">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'weekly' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'mealcreation' %}">Meal Creation</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'find_recipes' %}">Find Recipes</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'shelf' %}">My Shelf</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}" style="font-weight: bold;">Log Out</a></li>
+                {% else %}
+                
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    <div class="body">
+        <div class="container" style="margin: auto;">
+            <div style="margin: auto; max-width: 600px;">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% block script %}
+
+    {% endblock %}
+    <!-- jQuery and Bootstrap JS (might remove) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>
+

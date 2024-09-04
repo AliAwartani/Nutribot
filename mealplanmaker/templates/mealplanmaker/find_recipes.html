@@ -1,0 +1,117 @@
+{% extends "mealplanmaker/layout.html" %}
+
+{% block body %}
+<!-- Main Layout Container -->
+<div style="display: flex; justify-content: space-between;">
+
+    <!-- Find Recipes and Allergies Section -->
+    <div style="flex: 3; margin-right: 20px;">
+        <br>
+        <h1 style="color: #00981e; text-align: left;">Find Recipes Based on Ingredients</h1>
+        <br>
+        <form method="get" action="{% url 'find_recipes' %}" style="text-align: left; margin-top: 20px;">
+            <input type="text" id="ingr" name="ingr" placeholder="Enter ingredients, separated by commas" style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
+            <button type="button" onclick="startSpeechRecognition('ingr')">🎤</button>
+            <br>
+            <input type="text" id="allergies" name="allergies" placeholder="Enter allergies or unwanted ingredients, separated by commas" style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;">
+            <button type="button" onclick="startSpeechRecognition('allergies')">🎤</button>
+            <br>
+            <input type="submit" value="Find Recipes" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+        </form>
+
+        {% if missing_ingredients %}
+            <p style="text-align: left; color: red;">The following ingredient(s) were not found: {{ missing_ingredients|join:", " }}. Please check the spelling or try different ingredients.</p>
+        {% elif recipes %}
+            <h2 style="text-align: left; color: #333;">Recipes Found:</h2>
+            <ul style="list-style-type: none; padding: 0; text-align: left;">
+                {% for recipe in recipes %}
+                <li style="{% if recipe.id in allergy_flagged_recipes %}background-color: #ffcccc;{% else %}background-color: #ccffcc;{% endif %} padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; width: 80%; max-width: 600px;">
+                    <h3 style="color: #333; cursor: pointer;" onclick="toggleInstructions('instructions{{recipe.id}}')">{{ recipe.name }}</h3>
+                    <p id="instructions{{recipe.id}}" style="color: #333; display: none;">{{ recipe.instructions }}</p>
+                    {% if recipe.id in allergy_flagged_recipes %}
+                    <p style="color: red;"><strong>Allergies Warning:</strong> This recipe contains ingredients you're allergic to.</p>
+                    <p>{{ allergy_ingredients }}</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="text-align: left;">Enter ingredients to find recipes!</p>
+        {% endif %}
+    </div>
+
+    <!-- Ingredient Inventory Section -->
+    <div style="flex: 2; padding-left: 20px;">
+        <h2 style="color: #00981e; size: 15pt; text-align: left;">Add New Ingredient</h2>
+        <form method="post" action="{% url 'find_recipes' %}" style="text-align: left;">
+            {% csrf_token %}
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="text" name="new_ingredient_name" placeholder="Ingredient Name" style="padding: 5px; width: 200px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="number" name="new_ingredient_quantity" min="0" step="0.50" placeholder="Quantity" style="padding: 5px; width: 100px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="submit" value="Add" style="padding: 5px 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            </div>
+        </form>
+
+        
+    
+        <form method="get" action="{% url 'find_recipes' %}" style="text-align: left; margin-bottom: 20px;">
+            <input type="text" name="search_ingredient" placeholder="Search Ingredient" style="padding: 5px; width: 200px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <input type="submit" value="Search" style="padding: 5px 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        </form>
+        <form action="{% url 'find_recipes' %}" method="get">
+            <button type="submit" name="list_all" value="1">List All Available Ingredients</button>
+        </form>
+    
+        <h2 style="color: #00981e; size: 15pt; text-align: left;">Ingredient Inventory</h2>
+        {% for ingredient in all_ingredients %}
+        <form method="post" action="{% url 'find_recipes' %}" style="text-align: left; margin-top: 20px;">
+            {% csrf_token %}
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="margin-right: 10px;">{{ ingredient.name }}: {{ ingredient.quantity }}</span>
+                <input type="number" name="new_quantity" min="0" step="0.50" value="{{ ingredient.quantity }}" style="padding: 5px; width: 100px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                <input type="submit" value="Update" style="padding: 5px 10px; margin-left: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            </div>
+        </form>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function toggleInstructions(id) {
+        var instructions = document.getElementById(id);
+        if (instructions.style.display === "none") {
+            instructions.style.display = "block";
+        } else {
+            instructions.style.display = "none";
+        }
+    }
+</script>
+
+<!-- SpeechRecognition Section -->
+<script>
+  var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+
+  if (typeof SpeechRecognition !== "undefined") {
+    function startSpeechRecognition(id) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const speechToText = event.results[0][0].transcript;
+        document.getElementById(id).value = speechToText;
+      };
+
+      recognition.onerror = function(event) {
+        alert('Error occurred in recognition: ' + event.error);
+      }
+    }
+  } else {
+    alert("Speech Recognition Not Available in this browser.");
+  }
+</script>
+{% endblock %}
